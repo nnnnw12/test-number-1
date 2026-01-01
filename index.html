@@ -230,7 +230,7 @@
             const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const history = JSON.parse(localStorage.getItem('chat_history') || '[]');
             history.push({content, type, isImage, time});
-            localStorage.setItem('chat_history', JSON.stringify(history));
+            localStorage.setItem('chat_history', JSON.stringify(history.slice(-50))); // Храним последние 50
             channel.postMessage({type: 'msg', content, isImage, time});
         }
 
@@ -269,7 +269,6 @@
             }
         };
 
-        // НАСТРОЙКИ ЗВОНКОВ (ДОБАВЛЕНО ЭХОПОДАВЛЕНИЕ)
         const audioSettings = {
             echoCancellation: true,
             noiseSuppression: true,
@@ -297,7 +296,6 @@
             }
         }
 
-        // ИСПРАВЛЕННЫЙ ПРИЕМ ЗВОНКА (теперь окно открывается у друга)
         peer.on('call', async (call) => {
             if(confirm("Входящий вызов! Принять?")) {
                 try {
@@ -307,7 +305,7 @@
                     });
                     
                     userCamera.srcObject = mainStream;
-                    callScreen.style.display = 'flex'; // Показываем экран звонка другу
+                    callScreen.style.display = 'flex';
                     call.answer(mainStream);
                     handleCall(call);
                 } catch (e) {
@@ -320,13 +318,15 @@
             currentCall = call;
             call.on('stream', (remoteStream) => {
                 remoteVideo.srcObject = remoteStream;
-                remoteVideo.play(); // Принудительный запуск видео
+                remoteVideo.play();
                 qualityInfo.innerText = "Связь стабильна";
             });
             
-            call.on('close', () => {
-                stopAllStreams();
-            });
+            call.on('close', stopAllStreams);
+            // Обработка обрыва соединения
+            call.peerConnection.oniceconnectionstatechange = () => {
+                if(call.peerConnection.iceConnectionState === 'disconnected') stopAllStreams();
+            };
         }
 
         document.getElementById('btnCopyLink').onclick = () => {
@@ -334,7 +334,7 @@
             alert("Ссылка скопирована!");
         };
 
-        // ДЕМКА ЭКРАНА
+        // УЛУЧШЕННАЯ ДЕМКА ЭКРАНА
         btnScreenShare.onclick = async () => {
             try {
                 if (!screenStream) {
@@ -343,16 +343,16 @@
                         audio: true
                     });
                     
-                    // Мы видим свою демку в главном окне
-                    remoteVideo.srcObject = screenStream;
+                    const videoTrack = screenStream.getVideoTracks()[0];
                     
+                    // Заменяем трек для собеседника
                     if(currentCall && currentCall.peerConnection) {
-                        const videoTrack = screenStream.getVideoTracks()[0];
                         const sender = currentCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
                         if(sender) sender.replaceTrack(videoTrack);
                     }
 
                     btnScreenShare.classList.add('active');
+                    videoTrack.onended = stopScreenShare;
                 } else {
                     stopScreenShare();
                 }
@@ -369,21 +369,18 @@
                 const sender = currentCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
                 if(sender) sender.replaceTrack(videoTrack);
             }
-            // Возвращаем видео собеседника
-            if (currentCall && currentCall.remoteStream) {
-                remoteVideo.srcObject = currentCall.remoteStream;
-            }
             btnScreenShare.classList.remove('active');
         }
 
         function stopAllStreams() {
             if(mainStream) mainStream.getTracks().forEach(t => t.stop());
-            stopScreenShare();
+            if(screenStream) screenStream.getTracks().forEach(t => t.stop());
             if(currentCall) currentCall.close();
             callScreen.style.display = 'none';
+            remoteVideo.srcObject = null;
+            userCamera.srcObject = null;
         }
 
-        // КНОПКИ УПРАВЛЕНИЯ
         document.getElementById('muteBtn').onclick = () => {
             isMuted = !isMuted;
             if(mainStream) mainStream.getAudioTracks()[0].enabled = !isMuted;
@@ -398,7 +395,6 @@
 
         document.getElementById('btnVideo').onclick = () => startCall(true);
         document.getElementById('btnAudio').onclick = () => startCall(false);
-
         document.getElementById('btnHangup').onclick = stopAllStreams;
 
         voiceBtn.onclick = () => {
