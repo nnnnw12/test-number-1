@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyLine Messenger Pro | High-End Edition</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg-dark: #0f172a;
+            --bg-sidebar: #1e293b;
+            --text-light: #f8fafc;
+            --msg-in: #334155;
+            --msg-out: #4f46e5;
+            --accent: #10b981;
+            --danger: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+
+        body { background: var(--bg-dark); color: var(--text-light); height: 100vh; display: flex; overflow: hidden; }
+
+        /* --- Sidebar --- */
+        .sidebar { width: 350px; background: var(--bg-sidebar); border-right: 1px solid #334155; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; font-size: 1.5rem; font-weight: bold; color: var(--primary); border-bottom: 1px solid #334155; }
+        
+        /* БЛОК ДЛЯ ID */
+        .id-section { padding: 15px 20px; border-bottom: 1px solid #334155; background: rgba(0,0,0,0.2); }
+        .id-label { font-size: 0.7rem; color: #94a3b8; margin-bottom: 5px; text-transform: uppercase; }
+        #myIdDisplay { color: var(--accent); font-weight: bold; cursor: pointer; word-break: break-all; font-size: 0.85rem; transition: 0.3s; }
+        #myIdDisplay:hover { filter: brightness(1.2); }
+        .friend-input-id { width: 100%; padding: 8px; margin-top: 10px; border-radius: 5px; border: none; background: #0f172a; color: white; outline: 1px solid var(--primary); }
+
+        .share-section { padding: 15px 20px; border-bottom: 1px solid #334155; }
+        #btnCopyLink { width: 100%; padding: 10px; border-radius: 8px; border: none; background: var(--primary); color: white; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        #btnCopyLink:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .chat-list { flex: 1; overflow-y: auto; }
+        .chat-item { padding: 15px 20px; display: flex; align-items: center; cursor: pointer; transition: 0.3s; gap: 15px; border-bottom: 1px solid #2d3a4f; }
+        .chat-item:hover { background: #334155; }
+        .chat-item.active { background: #334155; border-left: 4px solid var(--primary); }
+        .avatar { width: 45px; height: 45px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        /* --- Main Chat --- */
+        .main-chat { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .chat-header { padding: 15px 25px; background: var(--bg-sidebar); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .header-info { display: flex; align-items: center; gap: 12px; }
+        .header-actions { display: flex; gap: 15px; }
+        .header-actions button { background: none; border: none; color: var(--text-light); font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+        .header-actions button:hover { color: var(--primary); }
+
+        .messages-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: #0f172a; scroll-behavior: smooth; }
+        
+        .msg { max-width: 70%; padding: 12px 16px; border-radius: 15px; position: relative; line-height: 1.4; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .msg.in { align-self: flex-start; background: var(--msg-in); border-bottom-left-radius: 2px; }
+        .msg.out { align-self: flex-end; background: var(--msg-out); border-bottom-right-radius: 2px; }
+        .msg img { max-width: 100%; border-radius: 10px; margin-top: 5px; display: block; }
+        .msg-time { font-size: 0.7rem; opacity: 0.6; margin-top: 5px; text-align: right; }
+
+        /* Индикатор набора текста */
+        #typingIndicator { font-size: 0.8rem; color: var(--accent); margin-left: 20px; margin-bottom: 10px; display: none; }
+
+        /* --- Input Area --- */
+        .input-area { padding: 20px; background: var(--bg-sidebar); display: flex; align-items: center; gap: 15px; }
+        .input-wrapper { flex: 1; position: relative; }
+        .input-area input[type="text"] { width: 100%; padding: 12px 15px; border-radius: 25px; border: none; background: #334155; color: white; outline: none; }
+        .btn-icon { background: none; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer; transition: 0.2s; }
+        .btn-icon:hover { color: var(--primary); }
+        .send-btn { background: var(--primary); color: white; width: 45px; height: 45px; border-radius: 50%; border: none; cursor: pointer; }
+
+        /* --- Call Overlay --- */
+        .call-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.98); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .video-container { width: 90%; height: 75%; background: #000; border-radius: 20px; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        
+        #remoteVideo { width: 100%; height: 100%; object-fit: contain; background: #000; }
+        #localVideo { width: 100%; height: 100%; object-fit: contain; } 
+        #userCamera { width: 200px; height: 150px; position: absolute; bottom: 20px; right: 20px; border: 2px solid var(--primary); border-radius: 12px; background: #111; object-fit: cover; z-index: 110; }
+        
+        .call-btns { margin-top: 30px; display: flex; gap: 20px; }
+        .call-btn { width: 65px; height: 65px; border-radius: 50%; border: none; color: white; font-size: 1.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .hangup { background: var(--danger); }
+        .hangup:hover { transform: scale(1.1); background: #dc2626; }
+        .screen-share { background: var(--primary); }
+        .screen-share:hover { background: #4f46e5; }
+        .screen-share.active { background: var(--accent); box-shadow: 0 0 15px var(--accent); }
+        
+        .btn-mute { background: #475569; }
+        .btn-mute.active { background: var(--danger); }
+        .btn-full { background: #64748b; }
+
+        .quality-badge { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--accent); color: var(--accent); z-index: 120; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">SkyLine</div>
+        
+        <div class="id-section">
+            <div class="id-label">Ваш ID (для друга):</div>
+            <div id="myIdDisplay">Подключение...</div>
+            <input type="text" id="friendIdInput" class="friend-input-id" placeholder="Введите ID друга">
+        </div>
+
+        <div class="share-section">
+            <button id="btnCopyLink"><i class="fas fa-link"></i> Копировать ссылку</button>
+        </div>
+
+        <div class="chat-list" id="chatList">
+            <div class="chat-item active">
+                <div class="avatar">OC</div>
+                <div>
+                    <div>Общий Чат</div>
+                    <small style="color: var(--accent)">Эхоподавление включено</small>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-chat">
+        <div class="call-screen" id="callScreen">
+            <div class="quality-badge" id="qualityInfo">Ожидание потока...</div>
+            <div class="video-container" id="vContainer">
+                <video id="remoteVideo" autoplay playsinline></video>
+                <video id="userCamera" autoplay muted playsinline></video>
+                <video id="localVideo" autoplay playsinline style="display:none;"></video>
+            </div>
+            <div class="call-btns">
+                <button class="call-btn btn-mute" id="muteBtn" title="Микрофон"><i class="fas fa-microphone"></i></button>
+                <button class="call-btn screen-share" id="btnScreenShare" title="Демка экрана (60 FPS)"><i class="fas fa-desktop"></i></button>
+                <button class="call-btn btn-full" id="btnFull" title="Полный экран"><i class="fas fa-expand"></i></button>
+                <button class="call-btn hangup" id="btnHangup" title="Завершить"><i class="fas fa-phone-slash"></i></button>
+            </div>
+        </div>
+
+        <header class="chat-header">
+            <div class="header-info">
+                <div class="avatar">OC</div>
+                <div>
+                    <h4>Общий Чат</h4>
+                    <small id="statusText">В сети</small>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="btnAudio"><i class="fas fa-phone"></i></button>
+                <button id="btnVideo"><i class="fas fa-video"></i></button>
+            </div>
+        </header>
+
+        <div class="messages-area" id="msgArea"></div>
+        <div id="typingIndicator">Собеседник печатает...</div>
+
+        <footer class="input-area">
+            <input type="file" id="fileInput" hidden accept="image/*">
+            <button class="btn-icon" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-paperclip"></i>
+            </button>
+            <div class="input-wrapper">
+                <input type="text" id="userInput" placeholder="Напишите сообщение...">
+            </div>
+            <button class="btn-icon" id="voiceBtn"><i class="fas fa-microphone"></i></button>
+            <button class="send-btn" id="btnSend"><i class="fas fa-paper-plane"></i></button>
+        </footer>
+    </main>
+
+    <script>
+        // ИНИЦИАЛИЗАЦИЯ PEERJS
+        const peer = new Peer();
+        let currentCall;
+        let isMuted = false;
+        let mainStream; 
+        let screenStream;
+
+        peer.on('open', (id) => {
+            document.getElementById('myIdDisplay').innerText = id;
+        });
+
+        // Визуальное подтверждение копирования
+        document.getElementById('myIdDisplay').onclick = () => {
+            const id = document.getElementById('myIdDisplay').innerText;
+            navigator.clipboard.writeText(id);
+            const originalColor = document.getElementById('myIdDisplay').style.color;
+            document.getElementById('myIdDisplay').innerText = "СКОПИРОВАНО!";
+            setTimeout(() => {
+                document.getElementById('myIdDisplay').innerText = id;
+            }, 1000);
+        };
+
+        const msgArea = document.getElementById('msgArea');
+        const userInput = document.getElementById('userInput');
+        const btnSend = document.getElementById('btnSend');
+        const fileInput = document.getElementById('fileInput');
+        const callScreen = document.getElementById('callScreen');
+        const localVideo = document.getElementById('localVideo');
+        const userCamera = document.getElementById('userCamera');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const voiceBtn = document.getElementById('voiceBtn');
+        const btnScreenShare = document.getElementById('btnScreenShare');
+        const qualityInfo = document.getElementById('qualityInfo');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        const channel = new BroadcastChannel('skyline_chat');
+
+        // РАБОТА С СООБЩЕНИЯМИ
+        window.addEventListener('DOMContentLoaded', () => {
+            const history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+            history.forEach(msg => renderMessage(msg.content, msg.type, msg.isImage, msg.time));
+        });
+
+        function renderMessage(content, type, isImage, timeStr) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `msg ${type}`;
+            if(isImage) {
+                msgDiv.innerHTML = `<img src="${content}">`;
+            } else {
+                msgDiv.textContent = content;
+            }
+            const time = document.createElement('div');
+            time.className = 'msg-time';
+            time.textContent = timeStr || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            msgDiv.appendChild(time);
+            msgArea.appendChild(msgDiv);
+            msgArea.scrollTop = msgArea.scrollHeight;
+        }
+
+        function saveMessage(content, type, isImage) {
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+            history.push({content, type, isImage, time});
+            localStorage.setItem('chat_history', JSON.stringify(history));
+            channel.postMessage({type: 'msg', content, isImage, time});
+        }
+
+        channel.onmessage = (event) => {
+            if(event.data.type === 'msg') {
+                renderMessage(event.data.content, 'in', event.data.isImage, event.data.time);
+                typingIndicator.style.display = 'none';
+            } else if(event.data.type === 'typing') {
+                typingIndicator.style.display = 'block';
+                setTimeout(() => typingIndicator.style.display = 'none', 2000);
+            }
+        };
+
+        userInput.oninput = () => channel.postMessage({type: 'typing'});
+
+        function handleSend() {
+            const val = userInput.value.trim();
+            if(!val) return;
+            renderMessage(val, 'out', false);
+            saveMessage(val, 'out', false);
+            userInput.value = '';
+        }
+
+        btnSend.onclick = handleSend;
+        userInput.onkeypress = (e) => { if(e.key === 'Enter') handleSend(); };
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (f) => {
+                    renderMessage(f.target.result, 'out', true);
+                    saveMessage(f.target.result, 'out', true);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // НАСТРОЙКИ ЗВОНКОВ (ДОБАВЛЕНО ЭХОПОДАВЛЕНИЕ)
+        const audioSettings = {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+        };
+
+        async function startCall(video) {
+            const friendId = document.getElementById('friendIdInput').value;
+            if(!friendId) return alert("Введите ID друга!");
+
+            try {
+                mainStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: video ? { width: 1280, height: 720, frameRate: 30 } : false, 
+                    audio: audioSettings 
+                });
+                
+                userCamera.srcObject = mainStream;
+                callScreen.style.display = 'flex';
+                qualityInfo.innerText = video ? "Звонок: Видео" : "Звонок: Аудио";
+                
+                const call = peer.call(friendId, mainStream);
+                handleCall(call);
+            } catch (err) {
+                alert("Ошибка доступа к медиа");
+            }
+        }
+
+        peer.on('call', async (call) => {
+            if(confirm("Входящий вызов! Принять?")) {
+                mainStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: audioSettings });
+                userCamera.srcObject = mainStream;
+                callScreen.style.display = 'flex';
+                call.answer(mainStream);
+                handleCall(call);
+            }
+        });
+
+        function handleCall(call) {
+            currentCall = call;
+            call.on('stream', (remoteStream) => {
+                remoteVideo.srcObject = remoteStream;
+                qualityInfo.innerText = "Связь стабильна";
+            });
+        }
+
+        document.getElementById('btnCopyLink').onclick = () => {
+            navigator.clipboard.writeText(window.location.href);
+            alert("Ссылка скопирована!");
+        };
+
+        // ДЕМКА ЭКРАНА
+        btnScreenShare.onclick = async () => {
+            try {
+                if (!screenStream) {
+                    screenStream = await navigator.mediaDevices.getDisplayMedia({
+                        video: { frameRate: 60 },
+                        audio: true
+                    });
+                    remoteVideo.srcObject = screenStream;
+                    
+                    if(currentCall) {
+                        const videoTrack = screenStream.getVideoTracks()[0];
+                        const sender = currentCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
+                        if(sender) sender.replaceTrack(videoTrack);
+                    }
+
+                    btnScreenShare.classList.add('active');
+                } else {
+                    stopScreenShare();
+                }
+            } catch (err) { console.error(err); }
+        };
+
+        function stopScreenShare() {
+            if (screenStream) {
+                screenStream.getTracks().forEach(t => t.stop());
+                screenStream = null;
+            }
+            if(currentCall && mainStream) {
+                const videoTrack = mainStream.getVideoTracks()[0];
+                const sender = currentCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
+                if(sender) sender.replaceTrack(videoTrack);
+            }
+            remoteVideo.srcObject = null;
+            btnScreenShare.classList.remove('active');
+        }
+
+        // КНОПКИ УПРАВЛЕНИЯ
+        document.getElementById('muteBtn').onclick = () => {
+            isMuted = !isMuted;
+            if(mainStream) mainStream.getAudioTracks()[0].enabled = !isMuted;
+            document.getElementById('muteBtn').classList.toggle('active', isMuted);
+            document.getElementById('muteBtn').innerHTML = isMuted ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
+        };
+
+        document.getElementById('btnFull').onclick = () => {
+            if (!document.fullscreenElement) document.getElementById('vContainer').requestFullscreen();
+            else document.exitFullscreen();
+        };
+
+        document.getElementById('btnVideo').onclick = () => startCall(true);
+        document.getElementById('btnAudio').onclick = () => startCall(false);
+
+        document.getElementById('btnHangup').onclick = () => {
+            if(mainStream) mainStream.getTracks().forEach(t => t.stop());
+            stopScreenShare();
+            if(currentCall) currentCall.close();
+            callScreen.style.display = 'none';
+        };
+
+        voiceBtn.onclick = () => {
+            voiceBtn.classList.toggle('active');
+            voiceBtn.style.color = voiceBtn.classList.contains('active') ? '#ef4444' : '';
+            document.getElementById('statusText').innerText = voiceBtn.classList.contains('active') ? 'Запись голоса...' : 'В сети';
+        };
+    </script>
+</body>
+</html>
