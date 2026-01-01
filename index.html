@@ -3,759 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkyLine Messenger | Ultimate Edition</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <title>SkyLine Ultra Messenger</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    <style>
-        /* --- CSS STYLES --- */
-        :root {
-            --bg-main: #0f172a;
-            --bg-sec: #1e293b;
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --text-main: #f8fafc;
-            --text-sec: #94a3b8;
-            --success: #10b981;
-            --danger: #ef4444;
-            --incoming-msg: #334155;
-            --outgoing-msg: #6366f1;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            overflow: hidden;
-        }
-
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: 320px;
-            background-color: var(--bg-sec);
-            border-right: 1px solid #334155;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            gap: 20px;
-        }
-
-        .brand {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--primary);
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .connection-panel {
-            background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid #334155;
-        }
-
-        .label {
-            font-size: 0.75rem;
-            color: var(--text-sec);
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .my-id-box {
-            background: var(--bg-main);
-            padding: 10px;
-            border-radius: 8px;
-            font-family: monospace;
-            color: var(--success);
-            cursor: pointer;
-            word-break: break-all;
-            transition: 0.2s;
-            position: relative;
-        }
-
-        .my-id-box:hover { background: #151f32; }
-        .my-id-box:active { transform: scale(0.98); }
-
-        .friend-input {
-            width: 100%;
-            background: var(--bg-main);
-            border: 1px solid #475569;
-            padding: 10px;
-            border-radius: 8px;
-            color: white;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        .friend-input:focus { border-color: var(--primary); }
-
-        .btn-main {
-            width: 100%;
-            padding: 12px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-main:hover { background: var(--primary-hover); }
-
-        /* --- MAIN CHAT AREA --- */
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        .chat-header {
-            padding: 15px 25px;
-            background: var(--bg-sec);
-            border-bottom: 1px solid #334155;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .user-info h3 { font-size: 1.1rem; }
-        .user-info span { font-size: 0.8rem; color: var(--success); }
-
-        .header-controls button {
-            background: none;
-            border: none;
-            color: var(--text-main);
-            font-size: 1.2rem;
-            padding: 8px;
-            cursor: pointer;
-            border-radius: 50%;
-            transition: 0.2s;
-            width: 40px;
-            height: 40px;
-        }
-
-        .header-controls button:hover { background: rgba(255,255,255,0.1); }
-        .header-controls button.video-call { color: var(--primary); }
-
-        .messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background-image: radial-gradient(#1e293b 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-
-        .message {
-            max-width: 70%;
-            padding: 10px 15px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            line-height: 1.4;
-            position: relative;
-            word-wrap: break-word;
-        }
-
-        .message.in {
-            align-self: flex-start;
-            background: var(--incoming-msg);
-            border-bottom-left-radius: 2px;
-        }
-
-        .message.out {
-            align-self: flex-end;
-            background: var(--outgoing-msg);
-            border-bottom-right-radius: 2px;
-        }
-
-        .message img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-top: 5px;
-            cursor: pointer;
-        }
-
-        .msg-meta {
-            font-size: 0.7rem;
-            opacity: 0.7;
-            margin-top: 4px;
-            text-align: right;
-        }
-
-        /* --- INPUT AREA --- */
-        .input-bar {
-            padding: 20px;
-            background: var(--bg-sec);
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .input-bar input[type="text"] {
-            flex: 1;
-            background: #334155;
-            border: none;
-            padding: 12px 15px;
-            border-radius: 25px;
-            color: white;
-            outline: none;
-        }
-
-        .attach-btn {
-            color: var(--text-sec);
-            cursor: pointer;
-            font-size: 1.2rem;
-        }
-        .attach-btn:hover { color: var(--text-main); }
-
-        /* --- CALL OVERLAY (P2P VIDEO) --- */
-        #callOverlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.98);
-            z-index: 2000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .video-wrapper {
-            position: relative;
-            width: 80%;
-            height: 70%;
-            background: black;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-
-        #remoteVideo {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Чтобы не обрезалось */
-        }
-
-        #localVideo {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 200px;
-            height: 150px;
-            background: #1e293b;
-            border: 2px solid var(--primary);
-            border-radius: 10px;
-            object-fit: cover;
-            z-index: 2001;
-        }
-
-        .call-controls {
-            margin-top: 30px;
-            display: flex;
-            gap: 20px;
-        }
-
-        .ctrl-btn {
-            width: 60px; height: 60px;
-            border-radius: 50%;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
-        }
-
-        .ctrl-btn:hover { transform: scale(1.1); }
-        .btn-mute { background: #475569; }
-        .btn-mute.active { background: var(--danger); }
-        .btn-screen { background: var(--primary); }
-        .btn-screen.active { background: var(--success); box-shadow: 0 0 15px var(--success); }
-        .btn-end { background: var(--danger); }
-        .btn-full { background: #64748b; }
-
-        /* --- INCOMING CALL MODAL --- */
-        #incomingModal {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--bg-sec);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--primary);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 3000;
-            display: none;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-
-        .modal-content h4 { margin-bottom: 15px; }
-        .modal-btns { display: flex; gap: 10px; }
-        .btn-accept { background: var(--success); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-        .btn-reject { background: var(--danger); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-
-        /* --- TYPING INDICATOR --- */
-        .typing {
-            font-size: 0.75rem;
-            color: var(--accent);
-            padding-left: 20px;
-            margin-bottom: 5px;
-            height: 15px;
-            font-style: italic;
-            opacity: 0;
-            transition: 0.3s;
-        }
-        .typing.visible { opacity: 1; }
-
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
 
-    <div id="incomingModal">
-        <div class="modal-content">
-            <h4>📞 Входящий видеозвонок...</h4>
-            <div class="modal-btns">
-                <button class="btn-accept" id="btnAcceptCall">Принять</button>
-                <button class="btn-reject" id="btnRejectCall">Отклонить</button>
+    <div id="toast-container"></div>
+
+    <div id="incomingCallModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="avatar-pulse">
+                <i class="fas fa-phone-volume"></i>
+            </div>
+            <h3>Входящий звонок...</h3>
+            <p>Вас вызывает собеседник</p>
+            <div class="modal-actions">
+                <button id="btnAccept" class="btn-success"><i class="fas fa-check"></i> Принять</button>
+                <button id="btnReject" class="btn-danger"><i class="fas fa-times"></i> Отклонить</button>
             </div>
         </div>
     </div>
 
-    <aside class="sidebar">
-        <div class="brand"><i class="fas fa-bolt"></i> SkyLine</div>
-        
-        <div class="connection-panel">
-            <div class="label">Ваш ID (клик для копирования)</div>
-            <div class="my-id-box" id="myIdDisplay" title="Скопировать">Получение ID...</div>
-        </div>
-
-        <div class="connection-panel">
-            <div class="label">Позвонить другу</div>
-            <input type="text" class="friend-input" id="friendIdInput" placeholder="Вставьте ID друга сюда">
-            <button class="btn-main" id="btnConnectChat" style="margin-top: 10px;">
-                <i class="fas fa-link"></i> Подключиться к чату
-            </button>
-        </div>
-
-        <button class="btn-main" id="btnShareLink" style="background: #334155;">
-            <i class="fas fa-share-alt"></i> Ссылка на сайт
-        </button>
-        
-        <div style="flex:1;"></div>
-        <div style="font-size: 0.8rem; color: #64748b; text-align: center;">v 2.0 Stable P2P</div>
-    </aside>
-
-    <main class="chat-area">
-        <header class="chat-header">
-            <div class="user-info">
-                <h3>Активный чат</h3>
-                <span id="connectionStatus">Ожидание подключения...</span>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fas fa-satellite-dish"></i> SkyLine
             </div>
-            <div class="header-controls">
-                <button class="video-call" id="btnStartVideo" title="Видеозвонок"><i class="fas fa-video"></i></button>
-                <button id="btnStartAudio" title="Аудиозвонок"><i class="fas fa-phone"></i></button>
+
+            <div class="panel">
+                <div class="panel-header">ВАШ ID (Нажми для копирования)</div>
+                <div id="myIdDisplay" class="id-box" title="Нажми, чтобы скопировать">Подключение...</div>
             </div>
-        </header>
 
-        <div class="messages-container" id="msgContainer">
+            <div class="panel">
+                <div class="panel-header">ПОЗВОНИТЬ ДРУГУ</div>
+                <div class="input-group">
+                    <input type="text" id="friendIdInput" placeholder="Вставьте ID друга сюда...">
+                    <button id="btnConnect" title="Подключиться к чату"><i class="fas fa-link"></i></button>
+                </div>
             </div>
-        <div class="typing" id="typingIndicator">Собеседник печатает...</div>
 
-        <div class="input-bar">
-            <input type="file" id="fileInput" hidden accept="image/*">
-            <i class="fas fa-paperclip attach-btn" onclick="document.getElementById('fileInput').click()"></i>
-            <input type="text" id="msgInput" placeholder="Напишите сообщение...">
-            <button class="btn-main" id="btnSendMsg" style="width: auto; border-radius: 50%; width: 45px; height: 45px; padding: 0;">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-    </main>
+            <div class="panel actions">
+                <button id="btnShareLink" class="btn-outline">
+                    <i class="fas fa-share-alt"></i> Копировать ссылку на сайт
+                </button>
+            </div>
 
-    <div id="callOverlay">
-        <div class="video-wrapper" id="videoWrapper">
+            <div class="chat-status">
+                Статус: <span id="connStatus" class="status-disconnected">Нет соединения</span>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="chat-header">
+                <div class="chat-info">
+                    <div class="avatar">CH</div>
+                    <div>
+                        <h4>Рабочая комната</h4>
+                        <small id="typingIndicator">Собеседник печатает...</small>
+                    </div>
+                </div>
+                <div class="header-controls">
+                    <button id="btnStartVideo" class="control-btn"><i class="fas fa-video"></i></button>
+                    <button id="btnStartAudio" class="control-btn"><i class="fas fa-phone"></i></button>
+                </div>
+            </header>
+
+            <div id="messagesArea" class="messages-area">
+                <div class="system-msg">Добро пожаловать в SkyLine. Обмен данными защищен (P2P).</div>
+            </div>
+
+            <div class="input-area">
+                <input type="file" id="fileInput" hidden accept="image/*">
+                <button class="attach-btn" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input type="text" id="msgInput" placeholder="Введите сообщение...">
+                <button id="btnSend" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <div id="callOverlay" class="call-overlay">
+        <div class="video-grid" id="videoGrid">
             <video id="remoteVideo" autoplay playsinline></video>
-            <video id="localVideo" autoplay muted playsinline></video> </div>
-        <div class="call-controls">
-            <button class="ctrl-btn btn-mute" id="btnMute" title="Мут"><i class="fas fa-microphone"></i></button>
-            <button class="ctrl-btn btn-screen" id="btnScreen" title="Демка"><i class="fas fa-desktop"></i></button>
-            <button class="ctrl-btn btn-full" id="btnFull" title="Фуллскрин"><i class="fas fa-expand"></i></button>
-            <button class="ctrl-btn btn-end" id="btnHangup" title="Сброс"><i class="fas fa-phone-slash"></i></button>
+            
+            <div class="local-video-wrapper">
+                <video id="localVideo" autoplay muted playsinline></video>
+                <div class="local-label">Вы</div>
+            </div>
         </div>
-        <div style="color:white; margin-top:10px;" id="callQualityInfo">Соединение...</div>
+
+        <div class="call-bar">
+            <button id="btnMute" class="call-btn" title="Микрофон"><i class="fas fa-microphone"></i></button>
+            <button id="btnScreenShare" class="call-btn" title="Демка Экрана"><i class="fas fa-desktop"></i></button>
+            <button id="btnFullscreen" class="call-btn" title="На весь экран"><i class="fas fa-expand"></i></button>
+            <button id="btnHangup" class="call-btn hangup" title="Завершить"><i class="fas fa-phone-slash"></i></button>
+        </div>
+        
+        <div id="callQualityBadge" class="quality-badge">Соединение...</div>
     </div>
 
-    <script>
-        // --- КОНФИГУРАЦИЯ ---
-        const peer = new Peer(); // Создаем клиента PeerJS
-        let myId = null;
-        let activeConn = null; // Подключение для данных (чат)
-        let activeCall = null; // Подключение для медиа (звонок)
-        let localStream = null;
-        let screenStream = null;
-        let isMuted = false;
-
-        // Настройки аудио для подавления эха
-        const audioConstraints = {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-        };
-
-        // --- ЭЛЕМЕНТЫ DOM ---
-        const ui = {
-            myId: document.getElementById('myIdDisplay'),
-            friendId: document.getElementById('friendIdInput'),
-            status: document.getElementById('connectionStatus'),
-            msgs: document.getElementById('msgContainer'),
-            input: document.getElementById('msgInput'),
-            callOverlay: document.getElementById('callOverlay'),
-            remoteVideo: document.getElementById('remoteVideo'),
-            localVideo: document.getElementById('localVideo'),
-            incomingModal: document.getElementById('incomingModal'),
-            typing: document.getElementById('typingIndicator')
-        };
-
-        // --- 1. ИНИЦИАЛИЗАЦИЯ И ЧАТ ---
-
-        // Получение своего ID
-        peer.on('open', (id) => {
-            myId = id;
-            ui.myId.innerText = id;
-            console.log("My ID:", id);
-        });
-
-        // Ошибка PeerJS
-        peer.on('error', (err) => {
-            alert("Ошибка связи: " + err.type);
-            console.error(err);
-        });
-
-        // Копирование ID
-        ui.myId.onclick = () => {
-            navigator.clipboard.writeText(myId);
-            const originalText = ui.myId.innerText;
-            ui.myId.innerText = "СКОПИРОВАНО!";
-            setTimeout(() => ui.myId.innerText = originalText, 1500);
-        };
-
-        // Подключение к другу (ЧАТ)
-        document.getElementById('btnConnectChat').onclick = () => {
-            const friendId = ui.friendId.value.trim();
-            if (!friendId) return alert("Введите ID друга");
-            
-            const conn = peer.connect(friendId);
-            setupConnection(conn);
-        };
-
-        // Входящее подключение (ЧАТ)
-        peer.on('connection', (conn) => {
-            setupConnection(conn);
-        });
-
-        function setupConnection(conn) {
-            activeConn = conn;
-            
-            conn.on('open', () => {
-                ui.status.innerText = "Подключено к: " + conn.peer;
-                ui.status.style.color = "#10b981";
-                // Заполняем поле ID, чтобы можно было позвонить в ответ
-                ui.friendId.value = conn.peer; 
-            });
-
-            conn.on('data', (data) => {
-                // Обработка входящих данных
-                if (data.type === 'msg') {
-                    addMessage(data.content, 'in', data.isImage);
-                    ui.typing.classList.remove('visible');
-                } else if (data.type === 'typing') {
-                    ui.typing.classList.add('visible');
-                    clearTimeout(window.typingTimeout);
-                    window.typingTimeout = setTimeout(() => ui.typing.classList.remove('visible'), 2000);
-                }
-            });
-
-            conn.on('close', () => {
-                ui.status.innerText = "Отключено";
-                ui.status.style.color = "#ef4444";
-            });
-        }
-
-        // Отправка сообщений
-        function sendMessage(content, isImage = false) {
-            if (!content) return;
-            // Показываем у себя
-            addMessage(content, 'out', isImage);
-            
-            // Отправляем другу (если подключен)
-            if (activeConn && activeConn.open) {
-                activeConn.send({ type: 'msg', content: content, isImage: isImage });
-            } else {
-                // Сохраняем локально, даже если нет сети
-                console.log("Сообщение сохранено локально (нет соединения)");
-            }
-            
-            // Сохраняем в историю
-            saveToHistory({ type: 'out', content, isImage, time: new Date().toLocaleTimeString() });
-        }
-
-        document.getElementById('btnSendMsg').onclick = () => {
-            sendMessage(ui.input.value.trim());
-            ui.input.value = '';
-        };
-
-        ui.input.onkeypress = (e) => { if(e.key === 'Enter') document.getElementById('btnSendMsg').click(); };
-        
-        // Индикатор печати
-        ui.input.oninput = () => {
-            if (activeConn && activeConn.open) activeConn.send({ type: 'typing' });
-        };
-
-        // Отправка фото
-        document.getElementById('fileInput').onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (f) => sendMessage(f.target.result, true);
-                reader.readAsDataURL(file);
-            }
-        };
-
-        // Отрисовка сообщения
-        function addMessage(content, type, isImage) {
-            const div = document.createElement('div');
-            div.className = `message ${type}`;
-            const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            
-            if (isImage) {
-                div.innerHTML = `<img src="${content}"><div class="msg-meta">${time}</div>`;
-            } else {
-                div.innerHTML = `${content}<div class="msg-meta">${time}</div>`;
-            }
-            
-            ui.msgs.appendChild(div);
-            ui.msgs.scrollTop = ui.msgs.scrollHeight;
-            
-            if (type === 'in') saveToHistory({ type: 'in', content, isImage, time });
-        }
-
-        // История (LocalStorage)
-        function saveToHistory(msgObj) {
-            const history = JSON.parse(localStorage.getItem('skyline_history') || '[]');
-            history.push(msgObj);
-            if (history.length > 50) history.shift(); // Храним последние 50
-            localStorage.setItem('skyline_history', JSON.stringify(history));
-        }
-
-        // Загрузка истории
-        window.onload = () => {
-            const history = JSON.parse(localStorage.getItem('skyline_history') || '[]');
-            history.forEach(m => {
-                // Восстанавливаем сообщения без сохранения заново
-                const div = document.createElement('div');
-                div.className = `message ${m.type}`;
-                const content = m.isImage ? `<img src="${m.content}">` : m.content;
-                div.innerHTML = `${content}<div class="msg-meta">${m.time}</div>`;
-                ui.msgs.appendChild(div);
-            });
-            ui.msgs.scrollTop = ui.msgs.scrollHeight;
-        };
-
-        // --- 2. ЗВОНКИ И ДЕМКА (САМОЕ ВАЖНОЕ) ---
-
-        // Входящий звонок
-        peer.on('call', (call) => {
-            // Показываем красивое окно
-            ui.incomingModal.style.display = 'block';
-            
-            // Кнопка "Принять"
-            document.getElementById('btnAcceptCall').onclick = async () => {
-                ui.incomingModal.style.display = 'none';
-                try {
-                    // Получаем свои потоки с шумоподавлением
-                    localStream = await navigator.mediaDevices.getUserMedia({ 
-                        video: true, 
-                        audio: audioConstraints 
-                    });
-                    
-                    ui.localVideo.srcObject = localStream;
-                    ui.callOverlay.style.display = 'flex';
-                    
-                    call.answer(localStream); // Отвечаем своим потоком
-                    handleStream(call);
-                } catch (err) {
-                    alert("Ошибка доступа к камере: " + err);
-                }
-            };
-
-            // Кнопка "Отклонить"
-            document.getElementById('btnRejectCall').onclick = () => {
-                ui.incomingModal.style.display = 'none';
-                call.close();
-            };
-        });
-
-        // Исходящий звонок
-        async function makeCall(videoEnabled) {
-            const friendId = ui.friendId.value.trim();
-            if (!friendId) return alert("Введите ID друга!");
-
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: videoEnabled ? { width: 1280, height: 720 } : false, 
-                    audio: audioConstraints 
-                });
-                
-                ui.localVideo.srcObject = localStream;
-                ui.callOverlay.style.display = 'flex';
-                
-                const call = peer.call(friendId, localStream);
-                handleStream(call);
-            } catch (err) {
-                alert("Ошибка: " + err.message);
-                console.error(err);
-            }
-        }
-
-        // Общая логика обработки потока
-        function handleStream(call) {
-            activeCall = call;
-            
-            // Когда получаем видео друга
-            call.on('stream', (remoteStream) => {
-                ui.remoteVideo.srcObject = remoteStream;
-                ui.remoteVideo.play().catch(e => console.log("Autoplay blocked"));
-                document.getElementById('callQualityInfo').innerText = "Соединение установлено";
-            });
-
-            // Когда звонок завершен
-            call.on('close', closeCall);
-            
-            // Обработка разрыва соединения
-            call.peerConnection.oniceconnectionstatechange = () => {
-                if(call.peerConnection.iceConnectionState === 'disconnected') closeCall();
-            };
-        }
-
-        // Функция завершения звонка
-        function closeCall() {
-            if (activeCall) activeCall.close();
-            if (localStream) localStream.getTracks().forEach(t => t.stop());
-            if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-            
-            ui.callOverlay.style.display = 'none';
-            ui.remoteVideo.srcObject = null;
-            ui.localVideo.srcObject = null;
-            document.getElementById('btnScreen').classList.remove('active');
-            
-            // Сбрасываем иконку микрофона
-            document.getElementById('btnMute').innerHTML = '<i class="fas fa-microphone"></i>';
-            document.getElementById('btnMute').classList.remove('active');
-            isMuted = false;
-        }
-
-        // --- УПРАВЛЕНИЕ ВНУТРИ ЗВОНКА ---
-
-        document.getElementById('btnStartVideo').onclick = () => makeCall(true);
-        document.getElementById('btnStartAudio').onclick = () => makeCall(false);
-        document.getElementById('btnHangup').onclick = closeCall;
-
-        // Мут микрофона
-        document.getElementById('btnMute').onclick = function() {
-            if (!localStream) return;
-            isMuted = !isMuted;
-            localStream.getAudioTracks()[0].enabled = !isMuted;
-            this.classList.toggle('active', isMuted);
-            this.innerHTML = isMuted ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
-        };
-
-        // Фуллскрин
-        document.getElementById('btnFull').onclick = () => {
-            const el = document.getElementById('videoWrapper');
-            if (!document.fullscreenElement) el.requestFullscreen();
-            else document.exitFullscreen();
-        };
-
-        // --- ДЕМОНСТРАЦИЯ ЭКРАНА (ИСПРАВЛЕНО ДЛЯ ЗВУКА) ---
-        document.getElementById('btnScreen').onclick = async function() {
-            const btn = this;
-            
-            // Если демка не идет - включаем
-            if (!screenStream) {
-                try {
-                    // Запрашиваем только видео, чтобы не ломать аудио канал
-                    screenStream = await navigator.mediaDevices.getDisplayMedia({
-                        video: { frameRate: 60, cursor: "always" },
-                        audio: false // Важно false, чтобы не перебить микрофон
-                    });
-
-                    // Показываем себе в большом окне
-                    ui.remoteVideo.srcObject = screenStream;
-                    
-                    // Подменяем трек для друга
-                    if (activeCall) {
-                        const videoTrack = screenStream.getVideoTracks()[0];
-                        const sender = activeCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
-                        if (sender) sender.replaceTrack(videoTrack);
-                    }
-
-                    btn.classList.add('active');
-
-                    // Если нажали "Stop" в браузере
-                    screenStream.getVideoTracks()[0].onended = () => stopScreenShare();
-
-                } catch (err) { console.error("Ошибка демки:", err); }
-            } else {
-                // Если демка идет - выключаем
-                stopScreenShare();
-            }
-        };
-
-        function stopScreenShare() {
-            if (screenStream) {
-                screenStream.getTracks().forEach(t => t.stop());
-                screenStream = null;
-            }
-            
-            // Возвращаем камеру
-            if (activeCall && localStream) {
-                const videoTrack = localStream.getVideoTracks()[0];
-                const sender = activeCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
-                if (sender) sender.replaceTrack(videoTrack);
-            }
-
-            // Возвращаем видео друга на главный экран
-            if (activeCall && activeCall.remoteStream) {
-                ui.remoteVideo.srcObject = activeCall.remoteStream;
-            }
-
-            document.getElementById('btnScreen').classList.remove('active');
-        }
-
-        // Кнопка ссылки
-        document.getElementById('btnCopyLink').onclick = () => {
-            navigator.clipboard.writeText(window.location.href);
-            alert("Ссылка на сайт скопирована!");
-        };
-
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
