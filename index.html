@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyLine Ultra Messenger</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <div id="incomingCallModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="avatar-pulse">
+                <i class="fas fa-phone-volume"></i>
+            </div>
+            <h3>Входящий звонок...</h3>
+            <p>Вас вызывает собеседник</p>
+            <div class="modal-actions">
+                <button id="btnAccept" class="btn-success"><i class="fas fa-check"></i> Принять</button>
+                <button id="btnReject" class="btn-danger"><i class="fas fa-times"></i> Отклонить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fas fa-satellite-dish"></i> SkyLine
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">ВАШ ID (Нажми для копирования)</div>
+                <div id="myIdDisplay" class="id-box" title="Нажми, чтобы скопировать">Подключение...</div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">ПОЗВОНИТЬ ДРУГУ</div>
+                <div class="input-group">
+                    <input type="text" id="friendIdInput" placeholder="Вставьте ID друга сюда...">
+                    <button id="btnConnect" title="Подключиться к чату"><i class="fas fa-link"></i></button>
+                </div>
+            </div>
+
+            <div class="panel actions">
+                <button id="btnShareLink" class="btn-outline">
+                    <i class="fas fa-share-alt"></i> Копировать ссылку на сайт
+                </button>
+            </div>
+
+            <div class="chat-status">
+                Статус: <span id="connStatus" class="status-disconnected">Нет соединения</span>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="chat-header">
+                <div class="chat-info">
+                    <div class="avatar">CH</div>
+                    <div>
+                        <h4>Рабочая комната</h4>
+                        <small id="typingIndicator">Собеседник печатает...</small>
+                    </div>
+                </div>
+                <div class="header-controls">
+                    <button id="btnStartVideo" class="control-btn"><i class="fas fa-video"></i></button>
+                    <button id="btnStartAudio" class="control-btn"><i class="fas fa-phone"></i></button>
+                </div>
+            </header>
+
+            <div id="messagesArea" class="messages-area">
+                <div class="system-msg">Добро пожаловать в SkyLine. Обмен данными защищен (P2P).</div>
+            </div>
+
+            <div class="input-area">
+                <input type="file" id="fileInput" hidden accept="image/*">
+                <button class="attach-btn" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input type="text" id="msgInput" placeholder="Введите сообщение...">
+                <button id="btnSend" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <div id="callOverlay" class="call-overlay">
+        <div class="video-grid" id="videoGrid">
+            <video id="remoteVideo" autoplay playsinline></video>
+            
+            <div class="local-video-wrapper">
+                <video id="localVideo" autoplay muted playsinline></video>
+                <div class="local-label">Вы</div>
+            </div>
+        </div>
+
+        <div class="call-bar">
+            <button id="btnMute" class="call-btn" title="Микрофон"><i class="fas fa-microphone"></i></button>
+            <button id="btnScreenShare" class="call-btn" title="Демка Экрана"><i class="fas fa-desktop"></i></button>
+            <button id="btnFullscreen" class="call-btn" title="На весь экран"><i class="fas fa-expand"></i></button>
+            <button id="btnHangup" class="call-btn hangup" title="Завершить"><i class="fas fa-phone-slash"></i></button>
+        </div>
+        
+        <div id="callQualityBadge" class="quality-badge">Соединение...</div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
