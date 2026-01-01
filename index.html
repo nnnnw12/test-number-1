@@ -183,7 +183,6 @@
         document.getElementById('myIdDisplay').onclick = () => {
             const id = document.getElementById('myIdDisplay').innerText;
             navigator.clipboard.writeText(id);
-            const originalColor = document.getElementById('myIdDisplay').style.color;
             document.getElementById('myIdDisplay').innerText = "СКОПИРОВАНО!";
             setTimeout(() => {
                 document.getElementById('myIdDisplay').innerText = id;
@@ -298,13 +297,22 @@
             }
         }
 
+        // ИСПРАВЛЕННЫЙ ПРИЕМ ЗВОНКА (теперь окно открывается у друга)
         peer.on('call', async (call) => {
             if(confirm("Входящий вызов! Принять?")) {
-                mainStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: audioSettings });
-                userCamera.srcObject = mainStream;
-                callScreen.style.display = 'flex';
-                call.answer(mainStream);
-                handleCall(call);
+                try {
+                    mainStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: true, 
+                        audio: audioSettings 
+                    });
+                    
+                    userCamera.srcObject = mainStream;
+                    callScreen.style.display = 'flex'; // Показываем экран звонка другу
+                    call.answer(mainStream);
+                    handleCall(call);
+                } catch (e) {
+                    alert("Не удалось активировать камеру/микрофон");
+                }
             }
         });
 
@@ -312,7 +320,12 @@
             currentCall = call;
             call.on('stream', (remoteStream) => {
                 remoteVideo.srcObject = remoteStream;
+                remoteVideo.play(); // Принудительный запуск видео
                 qualityInfo.innerText = "Связь стабильна";
+            });
+            
+            call.on('close', () => {
+                stopAllStreams();
             });
         }
 
@@ -329,9 +342,11 @@
                         video: { frameRate: 60 },
                         audio: true
                     });
+                    
+                    // Мы видим свою демку в главном окне
                     remoteVideo.srcObject = screenStream;
                     
-                    if(currentCall) {
+                    if(currentCall && currentCall.peerConnection) {
                         const videoTrack = screenStream.getVideoTracks()[0];
                         const sender = currentCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
                         if(sender) sender.replaceTrack(videoTrack);
@@ -354,8 +369,18 @@
                 const sender = currentCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
                 if(sender) sender.replaceTrack(videoTrack);
             }
-            remoteVideo.srcObject = null;
+            // Возвращаем видео собеседника
+            if (currentCall && currentCall.remoteStream) {
+                remoteVideo.srcObject = currentCall.remoteStream;
+            }
             btnScreenShare.classList.remove('active');
+        }
+
+        function stopAllStreams() {
+            if(mainStream) mainStream.getTracks().forEach(t => t.stop());
+            stopScreenShare();
+            if(currentCall) currentCall.close();
+            callScreen.style.display = 'none';
         }
 
         // КНОПКИ УПРАВЛЕНИЯ
@@ -374,12 +399,7 @@
         document.getElementById('btnVideo').onclick = () => startCall(true);
         document.getElementById('btnAudio').onclick = () => startCall(false);
 
-        document.getElementById('btnHangup').onclick = () => {
-            if(mainStream) mainStream.getTracks().forEach(t => t.stop());
-            stopScreenShare();
-            if(currentCall) currentCall.close();
-            callScreen.style.display = 'none';
-        };
+        document.getElementById('btnHangup').onclick = stopAllStreams;
 
         voiceBtn.onclick = () => {
             voiceBtn.classList.toggle('active');
